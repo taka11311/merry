@@ -10,53 +10,57 @@ body { margin:0; font-family:sans-serif; background:#111; color:white; }
 input { padding:8px; border-radius:6px; border:none; }  
 button { padding:6px 12px; margin:5px 3px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }  
 .deleteBtn { background:#555; color:white; font-size:12px; padding:3px 8px; }  
-.plus { background:#00c853; color:white; }  
+.plus { background:#2196f3; color:white; }  
 .minus { background:#d50000; color:white; }  
 table { width:100%; border-collapse:collapse; text-align:center; }  
 th,td { border:1px solid #333; padding:6px; }  
 th { background:#222; }  
 .cellControls { display:flex; justify-content:center; align-items:center; gap:4px; }  
-.smallBtn { padding:4px 8px; font-size:14px; }  
 .totalCol { background:#1e1e1e; font-weight:bold; }  
-#logArea { max-height:250px; overflow-y:auto; font-size:14px; }  
+#logArea { max-height:250px; overflow-y:auto; font-size:14px; margin-top:8px; }  
 .logItem { padding:4px 0; border-bottom:1px solid #333; }  
+.logPlus { color:#2196f3; }  
+.logMinus { color:#ff5252; }  
 </style>  
 </head>  
 <body>  
   
 <div class="app">  
   
-  <div class="card">  
-    <h3>営業日</h3>  
-    <input type="date" id="saleDate">  
-  </div>  
+<div class="card">  
+<h3>営業日</h3>  
+<input type="date" id="saleDate">  
+</div>  
   
-  <h2>ドリンク管理システム</h2>  
+<h2>ドリンク管理システム</h2>  
   
-  <div class="card">  
-    <h3>① 女の子登録</h3>  
-    <input id="girlName" placeholder="名前を入力">  
-    <button onclick="addGirl()">追加</button>  
-    <div id="girlList"></div>  
-  </div>  
+<div class="card">  
+<h3>① 女の子登録</h3>  
+<input id="girlName" placeholder="名前を入力">  
+<button onclick="addGirl()">追加</button>  
+<div id="girlList"></div>  
+</div>  
   
-  <div class="card">  
-    <h3>② 今日の出勤選択</h3>  
-    <button onclick="confirmAttendance()">出勤確定</button>  
-  </div>  
+<div class="card">  
+<h3>② 今日の出勤選択</h3>  
+<button onclick="confirmAttendance()">出勤確定</button>  
+</div>  
   
-  <div id="drinkArea"></div>  
+<div id="drinkArea"></div>  
   
-  <div class="card">  
-    <h3>操作ログ</h3>  
-    <div id="logArea"></div>  
-  </div>  
+<div class="card">  
+<h3>操作ログ</h3>  
+<button onclick="clearLogs()" style="background:#aa0000;color:white;">  
+ログ削除  
+</button>  
+<div id="logArea"></div>  
+</div>  
   
-  <div class="card">  
-    <h3>③ データ操作</h3>  
-    <button onclick="exportCSV()">CSV書き出し</button>  
-    <button onclick="resetToday()">今日のデータをリセット</button>  
-  </div>  
+<div class="card">  
+<h3>③ データ操作</h3>  
+<button onclick="exportCSV()">CSV書き出し</button>  
+<button onclick="resetToday()">今日の数値をリセット</button>  
+</div>  
   
 </div>  
   
@@ -67,57 +71,16 @@ let actionLogs = [];
   
 const drinksList = ["S","M","L","shotA","shotB","mega","場内"];  
   
-// ==================  
+// =================  
 // キー管理  
-// ==================  
-function getDate(){  
-  return document.getElementById("saleDate").value;  
-}  
+// =================  
+function getDate(){ return document.getElementById("saleDate").value; }  
+function getDataKey(){ return "data_" + getDate(); }  
+function getLogKey(){ return "log_" + getDate(); }  
   
-function getDataKey(){  
-  const d = getDate();  
-  if(!d) return null;  
-  return "data_" + d;  
-}  
-  
-function getLogKey(){  
-  const d = getDate();  
-  if(!d) return null;  
-  return "log_" + d;  
-}  
-  
-// ==================  
-// 保存・読込  
-// ==================  
-function saveSession(){  
-  const key = getDataKey();  
-  if(!key) return;  
-  localStorage.setItem(key, JSON.stringify(todayGirls));  
-}  
-  
-function loadSession(){  
-  const key = getDataKey();  
-  if(!key) return;  
-  todayGirls = JSON.parse(localStorage.getItem(key)) || [];  
-  renderTable();  
-}  
-  
-function saveLogs(){  
-  const key = getLogKey();  
-  if(!key) return;  
-  localStorage.setItem(key, JSON.stringify(actionLogs));  
-}  
-  
-function loadLogs(){  
-  const key = getLogKey();  
-  if(!key) return;  
-  actionLogs = JSON.parse(localStorage.getItem(key)) || [];  
-  renderLogs();  
-}  
-  
-// ==================  
+// =================  
 // 初期化  
-// ==================  
+// =================  
 document.addEventListener("DOMContentLoaded", () => {  
   const today = new Date().toISOString().split("T")[0];  
   document.getElementById("saleDate").value = today;  
@@ -131,9 +94,30 @@ document.getElementById("saleDate").addEventListener("change", () => {
   loadLogs();  
 });  
   
-// ==================  
-// 女の子管理  
-// ==================  
+// =================  
+// 保存・読込  
+// =================  
+function saveSession(){  
+  localStorage.setItem(getDataKey(), JSON.stringify(todayGirls));  
+}  
+  
+function loadSession(){  
+  todayGirls = JSON.parse(localStorage.getItem(getDataKey())) || [];  
+  renderTable();  
+}  
+  
+function saveLogs(){  
+  localStorage.setItem(getLogKey(), JSON.stringify(actionLogs));  
+}  
+  
+function loadLogs(){  
+  actionLogs = JSON.parse(localStorage.getItem(getLogKey())) || [];  
+  renderLogs();  
+}  
+  
+// =================  
+// 女の子管理（永久保持）  
+// =================  
 function saveGirls(){  
   localStorage.setItem("girls", JSON.stringify(girls));  
 }  
@@ -159,31 +143,31 @@ function renderGirlList(){
   list.innerHTML="";  
   girls.forEach((g,i)=>{  
     list.innerHTML+=`  
-      <div>  
-        <input type="checkbox" value="${g}"> ${g}  
-        <button class="deleteBtn" onclick="deleteGirl(${i})">削除</button>  
-      </div>`;  
+    <div>  
+      <input type="checkbox" value="${g}"> ${g}  
+      <button class="deleteBtn" onclick="deleteGirl(${i})">削除</button>  
+    </div>`;  
   });  
 }  
   
-// ==================  
-// 出勤  
-// ==================  
+// =================  
+// 出勤確定  
+// =================  
 function confirmAttendance(){  
   const checked = document.querySelectorAll("#girlList input:checked");  
   todayGirls=[];  
   checked.forEach(cb=>{  
-    let drinkObj={};  
-    drinksList.forEach(d=>drinkObj[d]=0);  
-    todayGirls.push({name:cb.value, drinks:drinkObj});  
+    let obj={};  
+    drinksList.forEach(d=>obj[d]=0);  
+    todayGirls.push({name:cb.value, drinks:obj});  
   });  
   saveSession();  
   renderTable();  
 }  
   
-// ==================  
-// 表  
-// ==================  
+// =================  
+// 表描画  
+// =================  
 function renderTable(){  
   if(!todayGirls.length){  
     document.getElementById("drinkArea").innerHTML="";  
@@ -191,40 +175,44 @@ function renderTable(){
   }  
   
   document.getElementById("drinkArea").innerHTML=`  
-    <div class="card">  
-      <table>  
-        <thead>  
-          <tr>  
-            <th>名前</th>  
-            ${drinksList.map(d=>`<th>${d}</th>`).join("")}  
-            <th>合計</th>  
-          </tr>  
-        </thead>  
-        <tbody>  
-          ${todayGirls.map((girl,i)=>`  
-            <tr>  
-              <td>${girl.name}</td>  
-              ${drinksList.map(type=>`  
-                <td>  
-                  <div class="cellControls">  
-                    <button class="minus smallBtn"  
-                      onclick="changeDrink(${i},'${type}',-1)">−</button>  
-                    <span>${girl.drinks[type]}</span>  
-                    <button class="plus smallBtn"  
-                      onclick="changeDrink(${i},'${type}',1)">＋</button>  
-                  </div>  
-                </td>`).join("")}  
-              <td class="totalCol">${getTotal(girl)}</td>  
-            </tr>`).join("")}  
-        </tbody>  
-      </table>  
-    </div>`;  
+  <div class="card">  
+  <table>  
+  <thead>  
+  <tr>  
+  <th>名前</th>  
+  ${drinksList.map(d=>`<th>${d}</th>`).join("")}  
+  <th>合計</th>  
+  </tr>  
+  </thead>  
+  <tbody>  
+  ${todayGirls.map((girl,i)=>`  
+    <tr>  
+      <td>${girl.name}</td>  
+      ${drinksList.map(type=>`  
+        <td>  
+          <div class="cellControls">  
+            <button class="minus"  
+              onclick="changeDrink(${i},'${type}',-1)">−</button>  
+            <span>${girl.drinks[type]}</span>  
+            <button class="plus"  
+              onclick="changeDrink(${i},'${type}',1)">＋</button>  
+          </div>  
+        </td>`).join("")}  
+      <td class="totalCol">${getTotal(girl)}</td>  
+    </tr>`).join("")}  
+  </tbody>  
+  </table>  
+  </div>`;  
 }  
   
 function changeDrink(i,type,amount){  
-  todayGirls[i].drinks[type]+=amount;  
-  if(todayGirls[i].drinks[type]<0)  
-    todayGirls[i].drinks[type]=0;  
+  const before = todayGirls[i].drinks[type];  
+  const after = before + amount;  
+  
+  if(after < 0) return;  
+  if(before === after) return;  
+  
+  todayGirls[i].drinks[type] = after;  
   
   addLog(todayGirls[i].name, type, amount);  
   saveSession();  
@@ -236,9 +224,9 @@ function getTotal(girl){
   return Object.values(girl.drinks).reduce((a,b)=>a+b,0);  
 }  
   
-// ==================  
+// =================  
 // ログ  
-// ==================  
+// =================  
 function addLog(name,type,amount){  
   const now = new Date();  
   const month = now.getMonth()+1;  
@@ -250,57 +238,81 @@ function addLog(name,type,amount){
   const timestamp = `${month}/${day} ${hours}:${minutes}:${seconds}`;  
   const sign = amount>0?"+":"-";  
   
-  actionLogs.unshift(`${timestamp}  ${name}  ${type}  ${sign}1`);  
+  actionLogs.unshift({  
+    text:`${timestamp}  ${name}  ${type}  ${sign}1`,  
+    type: amount>0 ? "plus" : "minus"  
+  });  
+  
   saveLogs();  
 }  
   
 function renderLogs(){  
-  const area = document.getElementById("logArea");  
-  area.innerHTML = actionLogs.map(log =>  
-    `<div class="logItem">${log}</div>`  
+  const area=document.getElementById("logArea");  
+  area.innerHTML=actionLogs.map(log=>  
+    `<div class="logItem ${log.type==="plus"?"logPlus":"logMinus"}">  
+      ${log.text}  
+    </div>`  
   ).join("");  
 }  
   
-// ==================  
-// CSV  
-// ==================  
+function clearLogs(){  
+  if(!confirm("この営業日のログを削除しますか？")) return;  
+  actionLogs=[];  
+  localStorage.removeItem(getLogKey());  
+  renderLogs();  
+}  
+  
+// =================  
+// CSV（列合計付き）  
+// =================  
 function exportCSV(){  
   if(!todayGirls.length){  
     alert("データがありません");  
     return;  
   }  
   
-  const date = getDate();  
+  const date=getDate();  
   if(!date){  
     alert("営業日を入力してください");  
     return;  
   }  
   
-  let csv = "名前," + drinksList.join(",") + "\n";  
+  let csv="名前,"+drinksList.join(",")+"\n";  
+  
   todayGirls.forEach(girl=>{  
-    csv += [girl.name, ...drinksList.map(d=>girl.drinks[d])].join(",") + "\n";  
+    csv += [girl.name,...drinksList.map(d=>girl.drinks[d])].join(",")+"\n";  
   });  
   
-  const bom = new Uint8Array([0xEF,0xBB,0xBF]);  
-  const blob = new Blob([bom,csv], {type:"text/csv"});  
-  const url = URL.createObjectURL(blob);  
-  const a = document.createElement("a");  
+  // 列合計計算  
+  let totals={};  
+  drinksList.forEach(d=>totals[d]=0);  
+  
+  todayGirls.forEach(girl=>{  
+    drinksList.forEach(d=>{  
+      totals[d]+=girl.drinks[d];  
+    });  
+  });  
+  
+  csv += ["合計",...drinksList.map(d=>totals[d])].join(",")+"\n";  
+  
+  const bom=new Uint8Array([0xEF,0xBB,0xBF]);  
+  const blob=new Blob([bom,csv],{type:"text/csv"});  
+  const url=URL.createObjectURL(blob);  
+  const a=document.createElement("a");  
   a.href=url;  
   a.download=`${date}.csv`;  
   a.click();  
   URL.revokeObjectURL(url);  
 }  
   
-// ==================  
-// リセット  
-// ==================  
+// =================  
+// リセット（ログ残す）  
+// =================  
 function resetToday(){  
-  if(!confirm("リセットしますか？")) return;  
-  
+  if(!confirm("数値だけリセットしますか？")) return;  
   todayGirls=[];  
   saveSession();  
   renderTable();  
-  
   document.querySelectorAll("#girlList input")  
     .forEach(cb=>cb.checked=false);  
 }  
