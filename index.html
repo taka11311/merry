@@ -4,77 +4,22 @@
 <meta charset="UTF-8">  
 <title>ドリンク管理システム</title>  
 <style>  
-body {  
-  margin: 0;  
-  font-family: sans-serif;  
-  background: #111;  
-  color: white;  
-}  
-.app {  
-  padding: 15px;  
-  max-width: 1200px;  
-  margin: auto;  
-}  
-.card {  
-  background: #1e1e1e;  
-  padding: 12px;  
-  margin-bottom: 15px;  
-  border-radius: 10px;  
-}  
-input {  
-  padding: 8px;  
-  border-radius: 6px;  
-  border: none;  
-}  
-button {  
-  padding: 6px 12px;  
-  margin: 5px 3px;  
-  border: none;  
-  border-radius: 6px;  
-  font-weight: bold;  
-  cursor: pointer;  
-}  
-.deleteBtn {  
-  background: #555;  
-  color: white;  
-  font-size: 12px;  
-  padding: 3px 8px;  
-}  
-.plus { background: #00c853; color: white; }  
-.minus { background: #d50000; color: white; }  
-table {  
-  width: 100%;  
-  border-collapse: collapse;  
-  text-align: center;  
-}  
-th, td {  
-  border: 1px solid #333;  
-  padding: 6px;  
-}  
-th { background: #222; }  
-.cellControls {  
-  display: flex;  
-  justify-content: center;  
-  align-items: center;  
-  gap: 4px;  
-}  
-.smallBtn {  
-  padding: 4px 8px;  
-  font-size: 14px;  
-}  
-.totalCol {  
-  background: #1e1e1e;  
-  font-weight: bold;  
-}  
-#logArea {  
-  max-height: 250px;  
-  overflow-y: auto;  
-  font-size: 14px;  
-}  
-.logItem {  
-  padding: 4px 0;  
-  border-bottom: 1px solid #333;  
-}  
+body { margin:0; font-family:sans-serif; background:#111; color:white; }  
+.app { padding:15px; max-width:1200px; margin:auto; }  
+.card { background:#1e1e1e; padding:12px; margin-bottom:15px; border-radius:10px; }  
+input { padding:8px; border-radius:6px; border:none; }  
+button { padding:6px 12px; margin:5px 3px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; }  
+.deleteBtn { background:#555; color:white; font-size:12px; padding:3px 8px; }  
+.plus { background:#00c853; color:white; }  
+.minus { background:#d50000; color:white; }  
+table { width:100%; border-collapse:collapse; text-align:center; }  
+th,td { border:1px solid #333; padding:6px; }  
+th { background:#222; }  
+.cellControls { display:flex; justify-content:center; align-items:center; gap:4px; }  
+.smallBtn { padding:4px 8px; font-size:14px; }  
+.totalCol { background:#1e1e1e; font-weight:bold; }  
+#logArea { max-height:250px; overflow-y:auto; font-size:14px; }  
+.logItem { padding:4px 0; border-bottom:1px solid #333; }  
 </style>  
 </head>  
 <body>  
@@ -122,11 +67,45 @@ let actionLogs = [];
   
 const drinksList = ["S","M","L","shotA","shotB","mega","場内"];  
   
-// ---------------- 営業日関連 ----------------  
+// ==================  
+// キー管理  
+// ==================  
+function getDate(){  
+  return document.getElementById("saleDate").value;  
+}  
+  
+function getDataKey(){  
+  const d = getDate();  
+  if(!d) return null;  
+  return "data_" + d;  
+}  
+  
 function getLogKey(){  
-  const date = document.getElementById("saleDate").value;  
-  if(!date) return null;  
-  return "log_" + date;  
+  const d = getDate();  
+  if(!d) return null;  
+  return "log_" + d;  
+}  
+  
+// ==================  
+// 保存・読込  
+// ==================  
+function saveSession(){  
+  const key = getDataKey();  
+  if(!key) return;  
+  localStorage.setItem(key, JSON.stringify(todayGirls));  
+}  
+  
+function loadSession(){  
+  const key = getDataKey();  
+  if(!key) return;  
+  todayGirls = JSON.parse(localStorage.getItem(key)) || [];  
+  renderTable();  
+}  
+  
+function saveLogs(){  
+  const key = getLogKey();  
+  if(!key) return;  
+  localStorage.setItem(key, JSON.stringify(actionLogs));  
 }  
   
 function loadLogs(){  
@@ -136,22 +115,25 @@ function loadLogs(){
   renderLogs();  
 }  
   
-function saveLogs(){  
-  const key = getLogKey();  
-  if(!key) return;  
-  localStorage.setItem(key, JSON.stringify(actionLogs));  
-}  
-  
+// ==================  
+// 初期化  
+// ==================  
 document.addEventListener("DOMContentLoaded", () => {  
   const today = new Date().toISOString().split("T")[0];  
   document.getElementById("saleDate").value = today;  
-  loadLogs();  
   renderGirlList();  
+  loadSession();  
+  loadLogs();  
 });  
   
-document.getElementById("saleDate").addEventListener("change", loadLogs);  
+document.getElementById("saleDate").addEventListener("change", () => {  
+  loadSession();  
+  loadLogs();  
+});  
   
-// ---------------- 女の子管理 ----------------  
+// ==================  
+// 女の子管理  
+// ==================  
 function saveGirls(){  
   localStorage.setItem("girls", JSON.stringify(girls));  
 }  
@@ -184,7 +166,9 @@ function renderGirlList(){
   });  
 }  
   
-// ---------------- 出勤 ----------------  
+// ==================  
+// 出勤  
+// ==================  
 function confirmAttendance(){  
   const checked = document.querySelectorAll("#girlList input:checked");  
   todayGirls=[];  
@@ -193,10 +177,13 @@ function confirmAttendance(){
     drinksList.forEach(d=>drinkObj[d]=0);  
     todayGirls.push({name:cb.value, drinks:drinkObj});  
   });  
+  saveSession();  
   renderTable();  
 }  
   
-// ---------------- 表 ----------------  
+// ==================  
+// 表  
+// ==================  
 function renderTable(){  
   if(!todayGirls.length){  
     document.getElementById("drinkArea").innerHTML="";  
@@ -240,26 +227,28 @@ function changeDrink(i,type,amount){
     todayGirls[i].drinks[type]=0;  
   
   addLog(todayGirls[i].name, type, amount);  
+  saveSession();  
   renderTable();  
   renderLogs();  
 }  
   
 function getTotal(girl){  
-  return Object.values(girl.drinks)  
-    .reduce((a,b)=>a+b,0);  
+  return Object.values(girl.drinks).reduce((a,b)=>a+b,0);  
 }  
   
-// ---------------- ログ ----------------  
+// ==================  
+// ログ  
+// ==================  
 function addLog(name,type,amount){  
   const now = new Date();  
-  const month = now.getMonth() + 1;  
+  const month = now.getMonth()+1;  
   const day = now.getDate();  
   const hours = now.getHours().toString().padStart(2,"0");  
   const minutes = now.getMinutes().toString().padStart(2,"0");  
   const seconds = now.getSeconds().toString().padStart(2,"0");  
   
   const timestamp = `${month}/${day} ${hours}:${minutes}:${seconds}`;  
-  const sign = amount > 0 ? "+" : "-";  
+  const sign = amount>0?"+":"-";  
   
   actionLogs.unshift(`${timestamp}  ${name}  ${type}  ${sign}1`);  
   saveLogs();  
@@ -267,49 +256,51 @@ function addLog(name,type,amount){
   
 function renderLogs(){  
   const area = document.getElementById("logArea");  
-  area.innerHTML = actionLogs  
-    .map(log => `<div class="logItem">${log}</div>`)  
-    .join("");  
+  area.innerHTML = actionLogs.map(log =>  
+    `<div class="logItem">${log}</div>`  
+  ).join("");  
 }  
   
-// ---------------- CSV ----------------  
+// ==================  
+// CSV  
+// ==================  
 function exportCSV(){  
   if(!todayGirls.length){  
     alert("データがありません");  
     return;  
   }  
   
-  const inputDate = document.getElementById("saleDate").value;  
-  if(!inputDate){  
+  const date = getDate();  
+  if(!date){  
     alert("営業日を入力してください");  
     return;  
   }  
   
   let csv = "名前," + drinksList.join(",") + "\n";  
   todayGirls.forEach(girl=>{  
-    csv += [girl.name, ...drinksList.map(d => girl.drinks[d])].join(",") + "\n";  
+    csv += [girl.name, ...drinksList.map(d=>girl.drinks[d])].join(",") + "\n";  
   });  
   
   const bom = new Uint8Array([0xEF,0xBB,0xBF]);  
   const blob = new Blob([bom,csv], {type:"text/csv"});  
   const url = URL.createObjectURL(blob);  
   const a = document.createElement("a");  
-  a.href = url;  
-  a.download = `${inputDate}.csv`;  
+  a.href=url;  
+  a.download=`${date}.csv`;  
   a.click();  
   URL.revokeObjectURL(url);  
 }  
   
-// ---------------- リセット ----------------  
+// ==================  
+// リセット  
+// ==================  
 function resetToday(){  
-  if(!todayGirls.length){  
-    alert("リセットするデータがありません");  
-    return;  
-  }  
   if(!confirm("リセットしますか？")) return;  
   
   todayGirls=[];  
+  saveSession();  
   renderTable();  
+  
   document.querySelectorAll("#girlList input")  
     .forEach(cb=>cb.checked=false);  
 }  
